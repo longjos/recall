@@ -1,0 +1,1 @@
+# Recall - A CQRS library for Python
