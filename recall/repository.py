@@ -17,11 +17,7 @@ class Repository(object):
 
     def load(self, guid):
         root = self._load_entity(guid)
-
-        for child in root._get_child_entities():
-            ver = child._version + 1
-            events = self.event_store.get_events_from_version(child.guid, ver)
-            self._push_events(child, events)
+        self._update_children(root)
 
         return root
 
@@ -35,7 +31,8 @@ class Repository(object):
         self.event_store.save(root)
         self._route_all_events(root)
         self._clean_entity(root)
-        self.snapshot_store.save(root)
+        if root._version % self.snapshot_frequency == 0:
+            self.snapshot_store.save(root)
 
     def _clean_entity(self, root):
         for entity in root._get_all_entities():
@@ -66,8 +63,7 @@ class Repository(object):
         entity = self.snapshot_store.load(guid)
 
         if entity:
-            ver = entity._version + 1
-            events = self.event_store.get_events_from_version(guid, ver)
+            events = self.event_store.get_events_from_version(guid, entity._version)
             self._push_events(entity, events)
 
         return entity
@@ -80,6 +76,12 @@ class Repository(object):
             events = self.event_store.get_all_events(guid)
             self._push_events(entity, events)
             return entity
+
+    def _update_children(self, entity):
+        for child in entity._get_child_entities():
+            events = self.event_store.get_events_from_version(child.guid, child._version)
+            self._push_events(child, events)
+            self._update_children(child)
 
     def _push_events(self, entity, events):
         for event in events:

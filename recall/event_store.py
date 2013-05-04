@@ -22,11 +22,11 @@ class Memory(EventStore):
         self._entities = {}
 
     def get_all_events(self, guid):
-        return self._events[guid]
+        return self._events.get(guid)
 
     def get_events_from_version(self, guid, version):
         assert isinstance(version, int)
-        return self._events[guid][version:]
+        return (self._events.get(guid) or [])[version:]
 
     def get_type(self, guid):
         return self._entities[guid]['type']
@@ -34,10 +34,9 @@ class Memory(EventStore):
     def save(self, entity):
         for provider in entity._get_all_entities():
             self._create_entity(provider)
-
-        for event in entity._get_all_events():
-            self._events[entity.guid].append(copy.copy(event))
-            self._increment_version(entity.guid)
+            for event in provider._events:
+                self._events[provider.guid].append(copy.copy(event))
+                self._increment_version(provider.guid)
 
     def _create_entity(self, entity):
         if not self._entities.get(entity.guid):
