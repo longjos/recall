@@ -55,15 +55,16 @@ class RepositoryLocator(object):
         """
         :rtype: :class:`recall.repository.Repository`
         """
-        if not self.identity_map.get(cls):
-            settings = self.settings.get(cls) or {}
-            self.identity_map[cls] = repository.Repository(
+        fqcn = cls.__module__ + "." + cls.__name__
+        if not self.identity_map.get(fqcn):
+            settings = self.settings.get(fqcn) or {}
+            self.identity_map[fqcn] = repository.Repository(
                 cls, self._get_event_store(settings),
                 self._get_snapshot_store(settings),
                 self._get_event_router(settings),
                 self._get_snapshot_frequency(settings))
 
-        return self.identity_map[cls]
+        return self.identity_map[fqcn]
 
 
 class EventRouterLocator(object):
@@ -72,22 +73,25 @@ class EventRouterLocator(object):
         """
         :type settings: :class:`dict`
         """
-        self.bootstrap = settings
+        self.settings = settings
         self.identity_map = {}
 
-    def locate(self, name):
+    def locate(self, fqcn):
         """
         :rtype: :class:`recall.event_router.EventRouter`
         """
-        if not self.identity_map.get(name):
-            if name not in dir(event_router):
-                raise EventRouterNotFoundError("Could not locate %s" % name)
-            cls = getattr(event_router, name)
-            settings = self.bootstrap.settings.get(name)
+        if not self.identity_map.get(fqcn):
+            class_name = fqcn.split(".")[-1]
+            module_name = ".".join(fqcn.split(".")[0:-1])
+            mdl = __import__(module_name, globals(), locals(), [class_name], 0)
+            if class_name not in dir(mdl):
+                raise EventRouterNotFoundError("Could not locate %s" % fqcn)
+            cls = getattr(mdl, class_name)
+            settings = self.settings.get(fqcn)
             kwargs = settings.get("kwargs") if settings else None
-            self.identity_map[name] = cls(**kwargs) if kwargs else cls()
+            self.identity_map[fqcn] = cls(**kwargs) if kwargs else cls()
 
-        return self.identity_map[name]
+        return self.identity_map[fqcn]
 
 
 class EventStoreLocator(object):
@@ -96,7 +100,7 @@ class EventStoreLocator(object):
         """
         :type settings: :class:`dict`
         """
-        self.bootstrap = settings
+        self.settings = settings
         self.identity_map = {}
 
     def locate(self, name):
@@ -107,7 +111,7 @@ class EventStoreLocator(object):
             if name not in dir(event_store):
                 raise EventStoreNotFoundError("Could not locate %s" % name)
             cls = getattr(event_store, name)
-            settings = self.bootstrap.settings.get(name)
+            settings = self.settings.get(name)
             kwargs = settings.get("kwargs") if settings else None
             self.identity_map[name] = cls(**kwargs) if kwargs else cls()
 
@@ -120,7 +124,7 @@ class SnapshotStoreLocator(object):
         """
         :type settings: :class:`dict`
         """
-        self.bootstrap = settings
+        self.settings = settings
         self.identity_map = {}
 
     def locate(self, name):
@@ -131,7 +135,7 @@ class SnapshotStoreLocator(object):
             if name not in dir(snapshot_store):
                 raise SnapshotStoreNotFoundError("Could not locate %s" % name)
             cls = getattr(snapshot_store, name)
-            settings = self.bootstrap.settings.get(name)
+            settings = self.settings.get(name)
             kwargs = settings.get("kwargs") if settings else None
             self.identity_map[name] = cls(**kwargs) if kwargs else cls()
 

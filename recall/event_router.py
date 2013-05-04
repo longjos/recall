@@ -1,3 +1,7 @@
+import datetime
+import uuid
+import msgpack
+import recall.models
 
 
 class EventRouter(object):
@@ -27,3 +31,21 @@ class Callback(EventRouter):
 
     def clear_event_handlers(self, event_cls):
         self._handlers[event_cls] = []
+
+
+class AMQP(EventRouter):
+    def __init__(self, **kwargs):
+        pass
+
+    def _packer(self, obj):
+        if isinstance(obj, recall.models.Event):
+            return {"__type__": obj.__class__.__name__, "event": obj.__dict__}
+        if isinstance(obj, datetime.datetime):
+            return {"__datetime__": True, "datetime": obj.isoformat()}
+        if isinstance(obj, uuid.UUID):
+            return {"__uuid__": True, "uuid": str(obj)}
+        return obj
+
+    def route(self, event):
+        packed = msgpack.packb(event, default=self._packer)
+        print("[!] Routed event as %s" % event.__class__.__name__)
