@@ -25,13 +25,13 @@ class EntityList(UserDict.UserDict):
         self.update({entity.guid: entity})
 
     def _get_all_events(self):
-        return tuple(x._get_all_events() for x in self.items())
+        return tuple(x._get_all_events() for x in self._get_all_entities())
 
-    def _get_all_child_entities(self):
-        return tuple(self.items())
+    def _get_child_entities(self):
+        return tuple(self.values())
 
     def _get_all_entities(self):
-        return self._get_all_child_entities()
+        return self._get_child_entities()
 
 
 class Entity(object):
@@ -53,19 +53,23 @@ class Entity(object):
     def _get_all_events(self):
         return (
             tuple(self._events)
-            + tuple(x._get_all_events() for x in self._get_child_entities()))
+            + tuple(reduce(
+                lambda x, y: x + y,
+                (x._get_all_events() for x in self._get_child_entities()),
+                tuple())))
 
     def _get_all_entities(self):
         return (self, ) + self._get_child_entities()
 
     def _get_child_entities(self):
         def flatten(that, this):
+            attr = getattr(self, this)
             return that + (
-                tuple(this) if isinstance(this, EntityList) else tuple())
+                attr._get_all_entities()
+                if isinstance(attr, EntityList) or isinstance(attr, Entity)
+                else tuple())
 
-        return (
-            tuple(entity for entity in dir(self) if isinstance(entity, Entity))
-            + reduce(flatten, dir(self), tuple()))
+        return reduce(flatten, dir(self), tuple())
 
     def _create_guid(self):
         return uuid.uuid4()
@@ -73,7 +77,7 @@ class Entity(object):
     def _handle_domain_event(self, event):
         event_cls = event.__class__
         if event_cls in self._handlers:
-            self._handlers[event_cls](event)
+            self._handlers[event_cls](self)(event)
 
     def _increment_version(self, amount=1):
         self._version += amount

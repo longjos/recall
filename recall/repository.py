@@ -20,7 +20,7 @@ class Repository(object):
 
         for child in root._get_child_entities():
             ver = child._version + 1
-            events = self.event_store.get_events_from_version(guid, ver)
+            events = self.event_store.get_events_from_version(child.guid, ver)
             self._push_events(child, events)
 
         return root

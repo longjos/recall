@@ -17,4 +17,4 @@ class Memory(SnapshotStore):
         return pickle.loads(self._snapshots.get(guid))
 
     def save(self, entity):
-        self._snapshots[entity.guid] = pickle.dumps(entity, pickle.HIGHEST_PROTOCOL)
+        self._snapshots[entity.guid] = pickle.dumps(entity)
