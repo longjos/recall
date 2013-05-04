@@ -1,4 +1,4 @@
-import copy
+import pickle
 
 
 class SnapshotStore(object):
@@ -14,7 +14,7 @@ class Memory(SnapshotStore):
         self._snapshots = {}
 
     def load(self, guid):
-        return self._snapshots.get(guid)
+        return pickle.loads(self._snapshots.get(guid))
 
     def save(self, entity):
-        self._snapshots[entity.guid] = copy.copy(entity)
+        self._snapshots[entity.guid] = pickle.dumps(entity, pickle.HIGHEST_PROTOCOL)

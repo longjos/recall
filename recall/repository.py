@@ -27,7 +27,7 @@ class Repository(object):
 
     def save(self, root):
         """
-        :type root: :class:`cqrs.models.Entity`
+        :type root: :class:`recall.models.Entity`
         """
         if not root._get_all_events():
             return

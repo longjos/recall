@@ -53,7 +53,7 @@ class RepositoryLocator(object):
 
     def locate(self, cls):
         """
-        :rtype: :class:`cqrs.repository.Repository`
+        :rtype: :class:`recall.repository.Repository`
         """
         if not self.identity_map.get(cls):
             settings = self.settings.get(cls) or {}
@@ -77,7 +77,7 @@ class EventRouterLocator(object):
 
     def locate(self, name):
         """
-        :rtype: :class:`cqrs.event_router.EventRouter`
+        :rtype: :class:`recall.event_router.EventRouter`
         """
         if not self.identity_map.get(name):
             if name not in dir(event_router):
@@ -101,7 +101,7 @@ class EventStoreLocator(object):
 
     def locate(self, name):
         """
-        :rtype: :class:`cqrs.event_store.EventStore`
+        :rtype: :class:`recall.event_store.EventStore`
         """
         if not self.identity_map.get(name):
             if name not in dir(event_store):
@@ -125,7 +125,7 @@ class SnapshotStoreLocator(object):
 
     def locate(self, name):
         """
-        :rtype: :class:`cqrs.snapshot_store.SnapshotStore`
+        :rtype: :class:`recall.snapshot_store.SnapshotStore`
         """
         if not self.identity_map.get(name):
             if name not in dir(snapshot_store):
