@@ -2,5 +2,11 @@ __main__.Company:
   event_router: recall.event_router.AMQP
 
 recall.event_router.AMQP:
-  host: 127.0.0.1
-  port: 11211
+  connection:
+    host: 127.0.0.1
+  exchange:
+    exchange: reputation.demo
+    type: topic
+  queue:
+    exchange: reputation.demo
+    name: reputation.demo

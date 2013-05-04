@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import pika
 import msgpack
 import recall.models
 
@@ -35,7 +36,15 @@ class Callback(EventRouter):
 
 class AMQP(EventRouter):
     def __init__(self, **kwargs):
-        pass
+        connection = kwargs.get("connection") or {}
+        channel = kwargs.get("channel") or {}
+        exchange = kwargs.get("exchange") or {}
+        queue = kwargs.get("queue") or {}
+        params = pika.ConnectionParameters(**connection)
+        self.connection = pika.BlockingConnection(params)
+        self.channel = self.connection.channel(**channel)
+        self.channel.exchange_declare(**exchange)
+        self.channel.queue_declare(**queue)
 
     def _packer(self, obj):
         if isinstance(obj, recall.models.Event):
@@ -47,5 +56,8 @@ class AMQP(EventRouter):
         return obj
 
     def route(self, event):
-        packed = msgpack.packb(event, default=self._packer)
+        self.channel.basic_publish(
+            exchange="",
+            routing_key=event.__class__.__name__,
+            body=msgpack.packb(event, default=self._packer))
         print("[!] Routed event as %s" % event.__class__.__name__)

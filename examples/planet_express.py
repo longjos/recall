@@ -1,5 +1,3 @@
-import yaml
-
 import recall.models
 import recall.locators
 import recall.event_handler
@@ -116,9 +114,6 @@ class Employee(recall.models.Entity):
 
 
 def main():
-    # Load the settings
-    settings = yaml.load(open("config.yml", 'r'))
-
     # Perform some commands
     company = Company()
     company.found(FoundCompany(name="Planet Express"))
@@ -127,7 +122,7 @@ def main():
     company.employees.get(fry).promote(PromoteEmployee(title="Narwhal Trainer"))
 
     # Save AR
-    repo = recall.locators.RepositoryLocator(settings).locate(Company)
+    repo = recall.locators.RepositoryLocator({}).locate(Company)
     repo.save(company)
     guid = company.guid
     del company
