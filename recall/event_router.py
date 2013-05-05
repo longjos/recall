@@ -46,7 +46,7 @@ class AMQP(EventRouter):
 
     def _packer(self, obj):
         if isinstance(obj, recall.models.Event):
-            return {"__type__": obj.__class__.__name__, "event": obj.__dict__}
+            return {"__type__": obj.__class__.__name__, "data": obj._data}
         if isinstance(obj, datetime.datetime):
             return {"__datetime__": True, "datetime": obj.isoformat()}
         if isinstance(obj, uuid.UUID):

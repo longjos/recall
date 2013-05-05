@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import datetime
 import optparse
 import random
@@ -369,7 +374,7 @@ def parse_cli_options():
 
 def main():
     name = "Tracker Demo"
-    settings = yaml.load(open("config.yml", 'r'))
+    settings = yaml.load(open("examples/config.yml", 'r'))
     values, args = parse_cli_options()
     count = values.count
     repo = recall.locators.RepositoryLocator(settings).locate(Account)
@@ -378,6 +383,18 @@ def main():
 
     for i in range(0, count):
         random_exec(repo)
+
+    print("New Accounts: %s (with %s updates)" % (counts.get('AccountCreated', 0), counts.get('AccountUpdated', 0)))
+    print("New Campaigns: %s (with %s updates)" % (counts.get('CampaignCreated', 0), counts.get('CampaignUpdated', 0)))
+    print("New Mailings: %s (with %s updates)" % (counts.get('MailingCreated', 0), counts.get('MailingUpdated', 0)))
+    print("New Addresses: %s" % counts.get('AddressCreated', 0))
+    print("")
+    print("Opens: %s" % counts.get('MailingOpened', 0))
+    print("Clicks: %s" % counts.get('MailingClicked', 0))
+    print("Shares: %s" % counts.get('MailingShared', 0))
+    print("Bounces: %s" % counts.get('MailingBounced', 0))
+    print("")
+    print("total: %s" % reduce(lambda x, y: x + y, counts.values(), 0))
 
     print("\n%s stopped at %s\n\n" % (name, datetime.datetime.now().isoformat()))
 
