@@ -361,7 +361,7 @@ def random_exec(repo):
 
 def parse_cli_options():
     parser = optparse.OptionParser()
-    parser.add_option("-c", "--count", dest="count", default=10000, type="int",
+    parser.add_option("-c", "--count", dest="count", default=100, type="int",
                       help="Count of random events to generate")
 
     return parser.parse_args()

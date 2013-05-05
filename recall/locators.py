@@ -88,8 +88,7 @@ class EventRouterLocator(object):
                 raise EventRouterNotFoundError("Could not locate %s" % fqcn)
             cls = getattr(mdl, class_name)
             settings = self.settings.get(fqcn)
-            kwargs = settings.get("kwargs") if settings else None
-            self.identity_map[fqcn] = cls(**kwargs) if kwargs else cls()
+            self.identity_map[fqcn] = cls(**settings) if settings else cls()
 
         return self.identity_map[fqcn]
 

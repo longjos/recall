@@ -1,12 +1,9 @@
-__main__.Company:
+__main__.Account:
   event_router: recall.event_router.AMQP
 
 recall.event_router.AMQP:
   connection:
     host: 127.0.0.1
   exchange:
-    exchange: reputation.demo
+    exchange: mailing.tracker
     type: topic
-  queue:
-    exchange: reputation.demo
-    name: reputation.demo
