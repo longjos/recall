@@ -39,6 +39,15 @@ class AMQP(EventRouter):
         connection = kwargs.get("connection") or {}
         channel = kwargs.get("channel") or {}
         self.exchange = kwargs.get("exchange") or {}
+
+        if "username" in connection and "password" in connection:
+            connection["credentials"] = pika.PlainCredentials(
+                username=connection["username"],
+                password=connection["password"]
+            )
+            del(connection["username"])
+            del(connection["password"])
+
         params = pika.ConnectionParameters(**connection)
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel(**channel)
