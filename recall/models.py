@@ -25,10 +25,16 @@ class EntityList(UserDict.UserDict):
         self.update({entity.guid: entity})
 
     def _get_all_events(self):
-        return tuple(x._get_all_events() for x in self._get_all_entities())
+        return reduce(lambda x, y: x + tuple(y._events), self._get_all_entities(), tuple())
 
     def _get_child_entities(self):
-        return tuple(self.values())
+        def flatten(that, this):
+            return that + (
+                this._get_all_entities()
+                if isinstance(this, EntityList) or isinstance(this, Entity)
+                else tuple())
+
+        return reduce(flatten, self.values(), tuple())
 
     def _get_all_entities(self):
         return self._get_child_entities()
@@ -51,12 +57,7 @@ class Entity(object):
         self._events += [event]
 
     def _get_all_events(self):
-        return (
-            tuple(self._events)
-            + tuple(reduce(
-                lambda x, y: x + y,
-                (x._get_all_events() for x in self._get_child_entities()),
-                tuple())))
+        return reduce(lambda x, y: x + tuple(y._events), self._get_all_entities(), tuple())
 
     def _get_all_entities(self):
         return (self, ) + self._get_child_entities()

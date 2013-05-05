@@ -18,7 +18,6 @@ class Repository(object):
     def load(self, guid):
         root = self._load_entity(guid)
         self._update_children(root)
-
         return root
 
     def save(self, root):

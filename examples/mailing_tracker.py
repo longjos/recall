@@ -17,6 +17,7 @@ import recall.locators
 accounts = []
 accounts_with_campaigns = []
 accounts_with_campaigns_with_mailings = []
+addresses = []
 counts = {}
 
 
@@ -286,8 +287,10 @@ def exec_create_address(repo):
     if accounts:
         counts['AddressCreated'] = counts.get('AddressCreated', 0) + 1
         account = repo.load(random.choice(accounts))
-        account.add_member(AddAccountMember(address=random_address()))
+        address = random_address()
+        account.add_member(AddAccountMember(address=address))
         repo.save(account)
+        addresses.append(address)
 
 
 def exec_create_campaign(repo):
@@ -319,35 +322,35 @@ def exec_send_mailing(repo):
 
 
 def exec_open_mailing(repo):
-    if accounts_with_campaigns_with_mailings:
+    if accounts_with_campaigns_with_mailings and addresses:
         counts['MailingOpened'] = counts.get('MailingOpened', 0) + 1
         account_guid, campaign_guid = random.choice(accounts_with_campaigns_with_mailings)
         account = repo.load(account_guid)
         campaign = account.campaigns[campaign_guid]
         mailing = random.choice(campaign.mailings.values())
-        mailing.open(OpenMailing(datetime=random_time(), address=random_address()))
+        mailing.open(OpenMailing(datetime=random_time(), address=random.choice(addresses)))
         repo.save(account)
 
 
 def exec_click_mailing(repo):
-    if accounts_with_campaigns_with_mailings:
+    if accounts_with_campaigns_with_mailings and addresses:
         counts['MailingClicked'] = counts.get('MailingClicked', 0) + 1
         account_guid, campaign_guid = random.choice(accounts_with_campaigns_with_mailings)
         account = repo.load(account_guid)
         campaign = account.campaigns[campaign_guid]
         mailing = random.choice(campaign.mailings.values())
-        mailing.click(ClickMailing(datetime=random_time(), address=random_address()))
+        mailing.click(ClickMailing(datetime=random_time(), address=random.choice(addresses)))
         repo.save(account)
 
 
 def exec_share_mailing(repo):
-    if accounts_with_campaigns_with_mailings:
+    if accounts_with_campaigns_with_mailings and addresses:
         counts['MailingShared'] = counts.get('MailingShared', 0) + 1
         account_guid, campaign_guid = random.choice(accounts_with_campaigns_with_mailings)
         account = repo.load(account_guid)
         campaign = account.campaigns[campaign_guid]
         mailing = random.choice(campaign.mailings.values())
-        mailing.share(ShareMailing(datetime=random_time(), address=random_address()))
+        mailing.share(ShareMailing(datetime=random_time(), address=random.choice(addresses)))
         repo.save(account)
 
 
@@ -366,10 +369,19 @@ def random_exec(repo):
 
 def parse_cli_options():
     parser = optparse.OptionParser()
-    parser.add_option("-c", "--count", dest="count", default=100, type="int",
+    parser.add_option("-c", "--count", dest="count", default=10000, type="int",
                       help="Count of random events to generate")
 
     return parser.parse_args()
+
+
+def cnt_evnt(events, event_cls=None):
+    def agg(events, event_cls):
+        return (len(tuple(x for x in events if x.__class__ == event_cls))
+                if event_cls
+                else len(events))
+
+    return reduce(lambda x, y: x + agg(y, event_cls), events, 0)
 
 
 def main():
@@ -384,17 +396,17 @@ def main():
     for i in range(0, count):
         random_exec(repo)
 
-    print("New Accounts: %s (with %s updates)" % (counts.get('AccountCreated', 0), counts.get('AccountUpdated', 0)))
-    print("New Campaigns: %s (with %s updates)" % (counts.get('CampaignCreated', 0), counts.get('CampaignUpdated', 0)))
-    print("New Mailings: %s (with %s updates)" % (counts.get('MailingCreated', 0), counts.get('MailingUpdated', 0)))
-    print("New Addresses: %s" % counts.get('AddressCreated', 0))
+    events = repo.event_store._events.values()
+    print("New Accounts: %s/%s (with %s/%s updates)" % (counts.get('AccountCreated', 0), cnt_evnt(events, AccountCreated), counts.get('AccountUpdated', 0), cnt_evnt(events, AccountNameChanged)))
+    print("New Campaigns: %s/%s (with %s/%s updates)" % (counts.get('CampaignCreated', 0), cnt_evnt(events, AccountCampaignAdded), counts.get('CampaignUpdated', 0), cnt_evnt(events, CampaignNameChanged)))
+    print("New Mailings: %s/%s" % (counts.get('MailingCreated', 0), cnt_evnt(events, CampaignMailingSent)))
+    print("New Addresses: %s/%s" % (counts.get('AddressCreated', 0), cnt_evnt(events, AccountMemberAdded)))
     print("")
-    print("Opens: %s" % counts.get('MailingOpened', 0))
-    print("Clicks: %s" % counts.get('MailingClicked', 0))
-    print("Shares: %s" % counts.get('MailingShared', 0))
-    print("Bounces: %s" % counts.get('MailingBounced', 0))
+    print("Opens: %s/%s" % (counts.get('MailingOpened', 0), cnt_evnt(events, MailingOpened)))
+    print("Clicks: %s/%s" % (counts.get('MailingClicked', 0), cnt_evnt(events, MailingClicked)))
+    print("Shares: %s/%s" % (counts.get('MailingShared', 0), cnt_evnt(events, MailingShared)))
     print("")
-    print("total: %s" % reduce(lambda x, y: x + y, counts.values(), 0))
+    print("Total: %s/%s" % (reduce(lambda x, y: x + y, counts.values(), 0), cnt_evnt(events)))
 
     print("\n%s stopped at %s\n\n" % (name, datetime.datetime.now().isoformat()))
 
