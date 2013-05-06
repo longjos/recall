@@ -2,6 +2,8 @@ import itertools
 import uuid
 import UserDict
 
+import event_handler
+
 
 class Command(UserDict.UserDict):
     """
@@ -29,16 +31,18 @@ class Event(UserDict.DictMixin):
     :type guid: :class:`uuid.UUID`
     """
     def __init__(self, guid):
+        assert isinstance(guid, uuid.UUID)
         self._data = {"guid": guid}
 
-    def __getitem__(self, guid):
+    def __getitem__(self, guid_str):
         """
-        :param guid: The guid of the domain entity
-        :type guid: :class:`uuid.UUID`
+        :param guid_str: The GUID of the domain entity
+        :type guid_str: :class:`str`
 
         :rtype: :class:`object`
         """
-        return self._data[guid]
+        assert isinstance(guid_str, str)
+        return self._data[guid_str]
 
     def keys(self):
         """
@@ -65,6 +69,7 @@ class EntityList(UserDict.UserDict):
         :param entity: The domain entity
         :type entity: :class:`recall.models.Entity`
         """
+        assert isinstance(entity, Entity)
         self.update({entity.guid: entity})
 
     def get_all_events(self):
@@ -128,6 +133,7 @@ class Entity(object):
         :param event: The event to apply
         :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, Event)
         self._handle_domain_event(event)
         self._events += [event]
 
@@ -165,6 +171,7 @@ class Entity(object):
         :param event: The event to apply
         :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, Event)
         event_cls = event.__class__
         if event_cls in self._handlers:
             self._handlers[event_cls](self)(event)
@@ -176,6 +183,7 @@ class Entity(object):
         :param amount: The amount to increment
         :type amount: :class:`int`
         """
+        assert isinstance(amount, int)
         self._version += amount
 
     def _clear_events(self):
@@ -184,17 +192,19 @@ class Entity(object):
         """
         self._events = []
 
-    def _register_event_handler(self, event_cls, callback):
+    def _register_event_handler(self, event_cls, callback_cls):
         """
         Register a domain event handler for an event
 
         :param event_cls: The event type to handle
         :type event_cls: :class:`type`
 
-        :param callback: The callback class
-        :type callback: :class:`recall.event_handler.DomainEventHandler`
+        :param callback_cls: The callback class
+        :type callback_cls: :class:`type`
         """
-        self._handlers[event_cls] = callback
+        assert isinstance(event_cls, type(Event))
+        assert isinstance(callback_cls, type(event_handler.DomainEventHandler))
+        self._handlers[event_cls] = callback_cls
 
 
 class AggregateRoot(Entity):

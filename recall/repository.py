@@ -1,3 +1,9 @@
+import collections
+import uuid
+import recall.event_store
+import recall.event_router
+import recall.models
+import recall.snapshot_store
 
 
 class Repository(object):
@@ -29,6 +35,11 @@ class Repository(object):
     """
     def __init__(self, root_cls, event_store, snapshot_store, event_router,
                  snapshot_frequency):
+        assert isinstance(root_cls, type)
+        assert isinstance(event_store, recall.event_store.EventStore)
+        assert isinstance(snapshot_store, recall.snapshot_store.SnapshotStore)
+        assert isinstance(event_router, recall.event_router.EventRouter)
+        assert isinstance(snapshot_frequency, int)
         self.identity_map = {}
         self.root_cls = root_cls
         self.event_store = event_store
@@ -45,6 +56,7 @@ class Repository(object):
 
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         root = self._load_entity(guid)
         self._update_children(root)
         return root
@@ -56,6 +68,7 @@ class Repository(object):
         :param root: The aggregate root
         :type root: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(root, recall.models.AggregateRoot)
         if not root.get_all_events():
             return
 
@@ -73,6 +86,7 @@ class Repository(object):
         :param root: The aggregate root
         :type root: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(root, recall.models.AggregateRoot)
         for entity in root._get_all_entities():
             entity._increment_version(len(entity._events))
             entity._clear_events()
@@ -84,6 +98,7 @@ class Repository(object):
         :param root: The aggregate root
         :type root: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(root, recall.models.AggregateRoot)
         for event in root.get_all_events():
             self.event_router.route(event)
 
@@ -96,6 +111,7 @@ class Repository(object):
 
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         entity = (
             self._load_from_identity_map(guid)
             or self._load_from_snapshot(guid)
@@ -116,6 +132,7 @@ class Repository(object):
 
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         return self.identity_map.get(guid)
 
     def _load_from_snapshot(self, guid):
@@ -127,6 +144,7 @@ class Repository(object):
 
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         entity = self.snapshot_store.load(guid)
 
         if entity:
@@ -144,6 +162,7 @@ class Repository(object):
 
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         entity_cls = self.event_store.get_type(guid)
 
         if entity_cls:
@@ -159,6 +178,7 @@ class Repository(object):
         :param entity: The domain entity
         :type entity: :class:`recall.models.Entity`
         """
+        assert isinstance(entity, recall.models.Entity)
         for child in entity._get_child_entities():
             self._push_events(child, self.event_store.get_events_from_version(
                 child.guid,
@@ -173,8 +193,10 @@ class Repository(object):
         :type entity: :class:`recall.models.Entity`
 
         :param events: The domain events
-        :type events: :class:`iterator`
+        :type events: :class:`collections.Iterable`
         """
+        assert isinstance(entity, recall.models.Entity)
+        assert isinstance(events, collections.Iterable)
         for event in events:
             entity._handle_domain_event(event)
             entity._increment_version()

@@ -1,4 +1,5 @@
 import datetime
+import types
 import uuid
 import pika
 import msgpack
@@ -17,8 +18,9 @@ class EventRouter(object):
         Route the event
 
         :param event: The domain event
-        :type event: :class:`recall.model.Event`
+        :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, recall.models.Event)
         raise NotImplementedError
 
 
@@ -31,8 +33,9 @@ class StdOut(EventRouter):
         Print the event to stdout
 
         :param event: The domain event
-        :type event: :class:`recall.model.Event`
+        :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, recall.models.Event)
         print("[x] Routed event %s" % event.__class__.__name__)
 
 
@@ -48,8 +51,9 @@ class Callback(EventRouter):
         Handle the event with registered callbacks
 
         :param event: The domain event
-        :type event: :class:`recall.model.Event`
+        :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, recall.models.Event)
         callback = self._handlers.get(event.__class__)
         if callback:
             callback(event)
@@ -62,8 +66,10 @@ class Callback(EventRouter):
         :type event_cls: :class:`type`
 
         :param callback: The callback
-        :type callback: :class:`function` or :class:`instancemethod`
+        :type callback: :class:`types.FunctionType`
         """
+        assert isinstance(event_cls, type(recall.models.Event))
+        assert isinstance(callback, types.FunctionType)
         if not self._handlers.get(event_cls):
             self._handlers[event_cls] = []
 
@@ -84,6 +90,9 @@ class AMQP(EventRouter):
     :type exchange: :class:`dict`
     """
     def __init__(self, connection=None, channel=None, exchange=None):
+        assert isinstance(connection, dict) or isinstance(connection, types.NoneType)
+        assert isinstance(channel, dict) or isinstance(channel, types.NoneType)
+        assert isinstance(exchange, dict) or isinstance(exchange, types.NoneType)
         connection = connection or {}
         channel = channel or {}
         self.exchange = exchange or {}
@@ -123,8 +132,9 @@ class AMQP(EventRouter):
         Publish the event
 
         :param event: The domain event
-        :type event: :class:`recall.model.Event`
+        :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, recall.models.Event)
         self.channel.basic_publish(
             exchange=self.exchange.get("exchange", ""),
             routing_key=event.__class__.__name__,

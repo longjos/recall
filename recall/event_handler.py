@@ -1,3 +1,4 @@
+import recall.models
 
 
 class DomainEventHandler(object):
@@ -9,6 +10,7 @@ class DomainEventHandler(object):
     :type entity: :class:`recall.models.Entity`
     """
     def __init__(self, entity):
+        assert isinstance(entity, recall.models.Entity)
         self.entity = entity
 
     def __call__(self, event):
@@ -18,4 +20,5 @@ class DomainEventHandler(object):
         :param event: The domain event
         :type event: :class:`recall.models.Event`
         """
+        assert isinstance(event, recall.models.Event)
         raise NotImplementedError()

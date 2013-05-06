@@ -1,4 +1,7 @@
 import pickle
+import uuid
+
+import recall.models
 
 
 class SnapshotStore(object):
@@ -16,20 +19,22 @@ class SnapshotStore(object):
         """
         Load an aggregate root from a snapshot
 
-        :param root: The aggregate root
+        :param guid: The guid of the aggregate root
+        :type guid: :class:`uuid.UUID`
+
         :rtype: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(guid, uuid.UUID)
         raise NotImplementedError
 
     def save(self, root):
         """
         Take a snapshot of an aggregate root
 
-        :param guid: The guid of the aggregate root
-        :type guid: :class:`uuid.UUID`
-
+        :param root: The aggregate root
         :type root: :class:`recall.models.AggregateRoot`
         """
+        assert isinstance(root, recall.models.AggregateRoot)
         raise NotImplementedError
 
 
@@ -45,19 +50,21 @@ class Memory(SnapshotStore):
         """
         Load an aggregate root from a snapshot
 
-        :param root: The aggregate root
-        :rtype: :class:`recall.models.AggregateRoot`
-        """
-        snapshot = self._snapshots.get(guid)
-        return pickle.loads(snapshot) if snapshot else None
-
-    def save(self, entity):
-        """
-        Take a snapshot of an aggregate root
-
         :param guid: The guid of the aggregate root
         :type guid: :class:`uuid.UUID`
 
+        :rtype: :class:`recall.models.AggregateRoot`
+        """
+        assert isinstance(guid, uuid.UUID)
+        snapshot = self._snapshots.get(guid)
+        return pickle.loads(snapshot) if snapshot else None
+
+    def save(self, root):
+        """
+        Take a snapshot of an aggregate root
+
+        :param root: The aggregate root
         :type root: :class:`recall.models.AggregateRoot`
         """
-        self._snapshots[entity.guid] = pickle.dumps(entity)
+        assert isinstance(root, recall.models.AggregateRoot)
+        self._snapshots[root.guid] = pickle.dumps(root)

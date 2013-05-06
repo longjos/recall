@@ -1,6 +1,7 @@
-import repository
 import event_router
 import event_store
+import models
+import repository
 import snapshot_store
 
 
@@ -21,6 +22,7 @@ class RepositoryLocator(object):
     DEFAULT_SNAPSHOT_FREQUENCY = 10
 
     def __init__(self, settings):
+        assert isinstance(settings, dict)
         self.settings = settings
         self.identity_map = {}
         self.locator_event_router = Locator(settings)
@@ -36,6 +38,7 @@ class RepositoryLocator(object):
 
         :rtype: :class:`recall.event_router.EventRouter`
         """
+        assert isinstance(settings, dict)
         cls = settings.get("event_router")
         return (self.locator_event_router.locate(cls)
                 if cls else self.DEFAULT_EVENT_ROUTER())
@@ -49,6 +52,7 @@ class RepositoryLocator(object):
 
         :rtype: :class:`recall.event_store.EventStore`
         """
+        assert isinstance(settings, dict)
         cls = settings.get("event_store")
         return (self.locator_event_store.locate(cls)
                 if cls else self.DEFAULT_EVENT_STORE())
@@ -62,6 +66,7 @@ class RepositoryLocator(object):
 
         :rtype: :class:`recall.snapshot_store.SnapshotStore`
         """
+        assert isinstance(settings, dict)
         cls = settings.get("snapshot_store")
         return (self.locator_snapshot_store.locate(cls)
                 if cls else self.DEFAULT_SNAPSHOT_STORE())
@@ -75,6 +80,7 @@ class RepositoryLocator(object):
 
         :rtype: :class:`int`
         """
+        assert isinstance(settings, dict)
         return (settings.get("snapshot_frequency")
                 or self.DEFAULT_SNAPSHOT_FREQUENCY)
 
@@ -89,6 +95,7 @@ class RepositoryLocator(object):
 
         :rtype: :class:`recall.repository.Repository`
         """
+        assert isinstance(ar_cls, type(models.AggregateRoot))
         fqcn = ar_cls.__module__ + "." + ar_cls.__name__
         if not self.identity_map.get(fqcn):
             settings = self.settings.get(fqcn) or {}
@@ -109,6 +116,7 @@ class Locator(object):
     :type settings: :class:`dict`
     """
     def __init__(self, settings):
+        assert isinstance(settings, dict)
         self.settings = settings
         self.identity_map = {}
 
@@ -121,6 +129,7 @@ class Locator(object):
 
         :rtype: :class:`object`
         """
+        assert isinstance(fqcn, str)
         if not self.identity_map.get(fqcn):
             class_name = fqcn.split(".")[-1]
             module_name = ".".join(fqcn.split(".")[0:-1])

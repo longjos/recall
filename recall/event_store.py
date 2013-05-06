@@ -1,4 +1,7 @@
 import copy
+import uuid
+
+import recall.models
 
 
 class EventStore(object):
@@ -14,6 +17,7 @@ class EventStore(object):
 
         :rtype: :class:`iterator`
         """
+        assert isinstance(guid, uuid.UUID)
         raise NotImplementedError
 
     def get_events_from_version(self, guid, version):
@@ -28,6 +32,8 @@ class EventStore(object):
 
         :rtype: :class:`iterator`
         """
+        assert isinstance(guid, uuid.UUID)
+        assert isinstance(version, int)
         raise NotImplementedError
 
     def get_type(self, guid):
@@ -39,6 +45,7 @@ class EventStore(object):
 
         :rtype: :class:`type`
         """
+        assert isinstance(guid, uuid.UUID)
         raise NotImplementedError
 
     def save(self, entity):
@@ -48,6 +55,7 @@ class EventStore(object):
         :param entity: The domain entity
         :type entity: :class:`recall.models.Entity`
         """
+        assert isinstance(entity, recall.models.Entity)
         raise NotImplementedError
 
 
@@ -68,6 +76,7 @@ class Memory(EventStore):
 
         :rtype: :class:`iterator`
         """
+        assert isinstance(guid, uuid.UUID)
         return self._events.get(guid)
 
     def get_events_from_version(self, guid, version):
@@ -82,6 +91,7 @@ class Memory(EventStore):
 
         :rtype: :class:`iterator`
         """
+        assert isinstance(guid, uuid.UUID)
         assert isinstance(version, int)
         return (self._events.get(guid) or [])[version:]
 
@@ -94,6 +104,7 @@ class Memory(EventStore):
 
         :rtype: :class:`type`
         """
+        assert isinstance(guid, uuid.UUID)
         return self._entities[guid]['type']
 
     def save(self, entity):
@@ -103,6 +114,7 @@ class Memory(EventStore):
         :param entity: The domain entity
         :type entity: :class:`recall.models.Entity`
         """
+        assert isinstance(entity, recall.models.Entity)
         for provider in entity._get_all_entities():
             self._create_entity(provider)
             for event in provider._events:
@@ -116,6 +128,7 @@ class Memory(EventStore):
         :param entity: The domain entity
         :type entity: :class:`recall.models.Entity`
         """
+        assert isinstance(entity, recall.models.Entity)
         if not self._entities.get(entity.guid):
             self._entities[entity.guid] = {
                 "type": entity.__class__,
@@ -132,4 +145,5 @@ class Memory(EventStore):
         :param guid: The guid of the domain entity
         :type guid: :class:`uuid.UUID`
         """
+        assert isinstance(guid, uuid.UUID)
         self._entities[guid]["version"] += 1
