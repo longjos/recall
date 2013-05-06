@@ -16,6 +16,9 @@ Recall provides abstract implementations of Aggregage Roots, Domain Entities, Ev
  - [Greg Young: Unshackle Your Domain](http://www.infoq.com/presentations/greg-young-unshackle-qcon08)
  - [Udi Dahan: CQRS](http://www.infoq.com/presentations/Command-Query-Responsibility-Segregation)
 
+## API Docs
+[Read the Docs](https://recall.readthedocs.org/en/latest/)
+
 ## Todo
  - [x] Add AMQP Event Router
  - [ ] Add Event replay
