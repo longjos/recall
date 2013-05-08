@@ -1,5 +1,6 @@
 __main__.Account:
   event_router: recall.event_router.AMQP
+  snapshot_store: recall.snapshot_store.Memcached
 
 recall.event_router.AMQP:
   connection:
@@ -11,3 +12,6 @@ recall.event_router.AMQP:
   exchange:
     exchange: mailing.tracker
     type: topic
+
+recall.snapshot_store.Memcached:
+  servers: [ "127.0.0.1:11211" ]

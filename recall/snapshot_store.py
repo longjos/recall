@@ -1,6 +1,8 @@
 import pickle
 import uuid
 
+import memcache
+
 import recall.models
 
 
@@ -68,3 +70,33 @@ class Memory(SnapshotStore):
         """
         assert isinstance(root, recall.models.AggregateRoot)
         self._snapshots[root.guid] = pickle.dumps(root)
+
+
+class Memcached(SnapshotStore):
+    """
+    This snapshot store uses memcached as the snapshot store.
+    """
+    def __init__(self, **kwargs):
+        self._cache = memcache.Client(**kwargs)
+
+    def load(self, guid):
+        """
+        Load an aggregate root from a snapshot
+
+        :param guid: The guid of the aggregate root
+        :type guid: :class:`uuid.UUID`
+
+        :rtype: :class:`recall.models.AggregateRoot`
+        """
+        assert isinstance(guid, uuid.UUID)
+        return self._cache.get(str(guid))
+
+    def save(self, root):
+        """
+        Take a snapshot of an aggregate root
+
+        :param root: The aggregate root
+        :type root: :class:`recall.models.AggregateRoot`
+        """
+        assert isinstance(root, recall.models.AggregateRoot)
+        self._cache.set(str(root.guid), root)
