@@ -2,7 +2,7 @@ import itertools
 import uuid
 import UserDict
 
-import event_handler
+import recall.event_handler
 
 
 class Command(UserDict.UserDict):
@@ -203,7 +203,7 @@ class Entity(object):
         :type callback_cls: :class:`type`
         """
         assert isinstance(event_cls, type(Event))
-        assert isinstance(callback_cls, type(event_handler.DomainEventHandler))
+        assert isinstance(callback_cls, type(recall.event_handler.DomainEventHandler))
         self._handlers[event_cls] = callback_cls
 
 

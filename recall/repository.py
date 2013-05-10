@@ -1,5 +1,6 @@
 import collections
 import uuid
+
 import recall.event_store
 import recall.event_router
 import recall.models

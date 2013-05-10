@@ -1,8 +1,9 @@
-import datetime
 import types
-import uuid
 import pika
 import msgpack
+
+import recall.event_marshaler
+import recall.locators
 import recall.models
 
 
@@ -89,6 +90,9 @@ class AMQP(EventRouter):
     :param exchange: The exchange settings
     :type exchange: :class:`dict`
     """
+
+    DEFAULT_EVENT_MARSHALER = recall.event_marshaler.DefaultEventMarshaler
+
     def __init__(self, connection=None, channel=None, exchange=None):
         assert isinstance(connection, dict) or isinstance(connection, types.NoneType)
         assert isinstance(channel, dict) or isinstance(channel, types.NoneType)
@@ -109,23 +113,7 @@ class AMQP(EventRouter):
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel(**channel)
         self.channel.exchange_declare(**self.exchange)
-
-    def _packer(self, obj):
-        """
-        Default packer for msgpack
-
-        :param obj: The object to pack
-        :type obj: :class:`object`
-
-        :rtype: :class:`object`
-        """
-        if isinstance(obj, recall.models.Event):
-            return {"__type__": obj.__class__.__name__, "data": obj._data}
-        if isinstance(obj, datetime.datetime):
-            return {"__datetime__": True, "datetime": obj.isoformat()}
-        if isinstance(obj, uuid.UUID):
-            return {"__uuid__": True, "uuid": str(obj)}
-        return obj
+        self.marshaler = self.DEFAULT_EVENT_MARSHALER()
 
     def route(self, event):
         """
@@ -138,4 +126,4 @@ class AMQP(EventRouter):
         self.channel.basic_publish(
             exchange=self.exchange.get("exchange", ""),
             routing_key=event.__class__.__name__,
-            body=msgpack.packb(event, default=self._packer))
+            body=msgpack.packb(self.marshaler.marshal(event)))

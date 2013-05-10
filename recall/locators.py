@@ -1,8 +1,8 @@
-import event_router
-import event_store
-import models
-import repository
-import snapshot_store
+import recall.event_router
+import recall.event_store
+import recall.models
+import recall.repository
+import recall.snapshot_store
 
 
 class ServiceNotFoundError(Exception):
@@ -16,9 +16,9 @@ class RepositoryLocator(object):
     :param settings: The configuration settings
     :type settings: :class:`dict`
     """
-    DEFAULT_EVENT_STORE = event_store.Memory
-    DEFAULT_EVENT_ROUTER = event_router.StdOut
-    DEFAULT_SNAPSHOT_STORE = snapshot_store.Memory
+    DEFAULT_EVENT_STORE = recall.event_store.Memory
+    DEFAULT_EVENT_ROUTER = recall.event_router.StdOut
+    DEFAULT_SNAPSHOT_STORE = recall.snapshot_store.Memory
     DEFAULT_SNAPSHOT_FREQUENCY = 10
 
     def __init__(self, settings):
@@ -95,11 +95,11 @@ class RepositoryLocator(object):
 
         :rtype: :class:`recall.repository.Repository`
         """
-        assert isinstance(ar_cls, type(models.AggregateRoot))
+        assert isinstance(ar_cls, type(recall.models.AggregateRoot))
         fqcn = ar_cls.__module__ + "." + ar_cls.__name__
         if not self.identity_map.get(fqcn):
             settings = self.settings.get(fqcn) or {}
-            self.identity_map[fqcn] = repository.Repository(
+            self.identity_map[fqcn] = recall.repository.Repository(
                 ar_cls, self._get_event_store(settings),
                 self._get_snapshot_store(settings),
                 self._get_event_router(settings),
