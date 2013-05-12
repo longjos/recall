@@ -164,13 +164,10 @@ class Repository(object):
         :rtype: :class:`recall.models.AggregateRoot`
         """
         assert isinstance(guid, uuid.UUID)
-        entity_cls = self.event_store.get_type(guid)
-
-        if entity_cls:
-            entity = entity_cls()
-            events = self.event_store.get_all_events(guid)
-            self._push_events(entity, events)
-            return entity
+        ar = self.root_cls()
+        events = self.event_store.get_all_events(guid)
+        self._push_events(ar, events)
+        return ar
 
     def _update_children(self, entity):
         """

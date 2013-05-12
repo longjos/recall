@@ -129,7 +129,7 @@ class Locator(object):
 
         :rtype: :class:`object`
         """
-        assert isinstance(fqcn, str)
+        assert isinstance(fqcn, (str, unicode))
         if not self.identity_map.get(fqcn):
             class_name = fqcn.split(".")[-1]
             module_name = ".".join(fqcn.split(".")[0:-1])

@@ -22,7 +22,7 @@ Recall provides abstract implementations of Aggregate Roots, Domain Entities, Ev
 ## Todo
  - [x] Add AMQP Event Router
  - [ ] Add Event replay
- - [ ] Add Redis Event Store
+ - [x] Add Redis Event Store
  - [x] Add Memcached Snapshot Store
  - [ ] Tests!
 

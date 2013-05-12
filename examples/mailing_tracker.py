@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime
+import json
 import optparse
 import random
 import uuid
@@ -367,6 +368,24 @@ def random_exec(repo):
     return globals()[random.choice([p for p in globals() if p[:5] == "exec_"])](repo)
 
 
+def get_fqcn(cls):
+    return ".".join([cls.__module__, cls.__name__])
+
+
+def event_count(client, keys):
+    def combine_streams(streams, guid):
+        return streams + client.lrange(str(guid), 0, -1)
+
+    def aggregate_event(counts, event):
+        e = json.loads(event)
+        return dict(counts, **{
+            e['__type__']:
+            (1 if e['__type__'] not in counts else counts[e['__type__']] + 1)})
+
+    events = reduce(combine_streams, keys, [])
+    return reduce(aggregate_event, events, {'total': len(events)})
+
+
 def parse_cli_options():
     parser = optparse.OptionParser()
     parser.add_option("-c", "--count", dest="count", default=10000, type="int",
@@ -375,38 +394,30 @@ def parse_cli_options():
     return parser.parse_args()
 
 
-def cnt_evnt(events, event_cls=None):
-    def agg(events, event_cls):
-        return (len(tuple(x for x in events if x.__class__ == event_cls))
-                if event_cls
-                else len(events))
-
-    return reduce(lambda x, y: x + agg(y, event_cls), events, 0)
-
-
 def main():
     name = "Tracker Demo"
     settings = yaml.load(open("examples/config.yml", 'r'))
     values, args = parse_cli_options()
     count = values.count
     repo = recall.locators.RepositoryLocator(settings).locate(Account)
+    repo.event_store._client.flushall()
 
     print("%s started at %s\n" % (name, datetime.datetime.now().isoformat()))
 
     for i in range(0, count):
         random_exec(repo)
 
-    events = repo.event_store._events.values()
-    print("New Accounts: %s/%s (with %s/%s updates)" % (counts.get('AccountCreated', 0), cnt_evnt(events, AccountCreated), counts.get('AccountUpdated', 0), cnt_evnt(events, AccountNameChanged)))
-    print("New Campaigns: %s/%s (with %s/%s updates)" % (counts.get('CampaignCreated', 0), cnt_evnt(events, AccountCampaignAdded), counts.get('CampaignUpdated', 0), cnt_evnt(events, CampaignNameChanged)))
-    print("New Mailings: %s/%s" % (counts.get('MailingCreated', 0), cnt_evnt(events, CampaignMailingSent)))
-    print("New Addresses: %s/%s" % (counts.get('AddressCreated', 0), cnt_evnt(events, AccountMemberAdded)))
+    stream = event_count(repo.event_store._client, repo.event_store._client.keys())
+    print("New Accounts: %s/%s (with %s/%s updates)" % (counts.get('AccountCreated', 0), stream.get(get_fqcn(AccountCreated)), counts.get('AccountUpdated', 0), stream.get(get_fqcn(AccountNameChanged))))
+    print("New Campaigns: %s/%s (with %s/%s updates)" % (counts.get('CampaignCreated', 0), stream.get(get_fqcn(AccountCampaignAdded)), counts.get('CampaignUpdated', 0), stream.get(get_fqcn(CampaignNameChanged))))
+    print("New Mailings: %s/%s" % (counts.get('MailingCreated', 0), stream.get(get_fqcn(CampaignMailingSent))))
+    print("New Addresses: %s/%s" % (counts.get('AddressCreated', 0), stream.get(get_fqcn(AccountMemberAdded))))
     print("")
-    print("Opens: %s/%s" % (counts.get('MailingOpened', 0), cnt_evnt(events, MailingOpened)))
-    print("Clicks: %s/%s" % (counts.get('MailingClicked', 0), cnt_evnt(events, MailingClicked)))
-    print("Shares: %s/%s" % (counts.get('MailingShared', 0), cnt_evnt(events, MailingShared)))
+    print("Opens: %s/%s" % (counts.get('MailingOpened', 0), stream.get(get_fqcn(MailingOpened))))
+    print("Clicks: %s/%s" % (counts.get('MailingClicked', 0), stream.get(get_fqcn(MailingClicked))))
+    print("Shares: %s/%s" % (counts.get('MailingShared', 0), stream.get(get_fqcn(MailingShared))))
     print("")
-    print("Total: %s/%s" % (reduce(lambda x, y: x + y, counts.values(), 0), cnt_evnt(events)))
+    print("Total: %s/%s" % (reduce(lambda x, y: x + y, counts.values(), 0), stream.get('total')))
 
     print("\n%s stopped at %s\n\n" % (name, datetime.datetime.now().isoformat()))
 

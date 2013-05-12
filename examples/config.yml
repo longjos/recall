@@ -1,6 +1,7 @@
 __main__.Account:
   event_router: recall.event_router.AMQP
   snapshot_store: recall.snapshot_store.Memcached
+  event_store: recall.event_store.Redis
 
 recall.event_router.AMQP:
   connection:
@@ -15,3 +16,8 @@ recall.event_router.AMQP:
 
 recall.snapshot_store.Memcached:
   servers: [ "127.0.0.1:11211" ]
+
+recall.event_store.Redis:
+  host: localhost
+  port: 6379
+  db: 0

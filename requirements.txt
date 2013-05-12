@@ -1,5 +1,7 @@
+hiredis
 msgpack-python
 pika
 pyaml
 python-memcached
+redis
 sphinx
