@@ -1,0 +1,4 @@
+atlassian-ide-plugin.xml
+*.pyc
+*.iml
+.idea

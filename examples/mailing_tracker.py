@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/src')
 
 import datetime
 import json
@@ -396,7 +396,13 @@ def parse_cli_options():
 
 def main():
     name = "Tracker Demo"
-    settings = yaml.load(open("examples/config.yml", 'r'))
+    settings = yaml.load(
+        open(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ) + "/config.yml", 'r'
+        )
+    )
     values, args = parse_cli_options()
     count = values.count
     repo = recall.locators.RepositoryLocator(settings).locate(Account)
